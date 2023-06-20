@@ -12,8 +12,8 @@ The ESPHome configuration and custom component for the M138 Modem is aimed to ex
 
 Most of the functionality of the original firmware has been re-implemented in ESPHome:
 
- - background noise and WiFi RSSI indicator LEDs
- - OLED Display and Buttons
+ - Background noise and WiFi RSSI indicator LEDs
+ - OLED Display and Buttons, local energy sensors
  - GPS Pinger functionality (compatible with Swarm's Bumblebee Hive)
  - Email Web App functionality (usable through ESPHome API / Home Assistant service call)
  - Direct Modem commands (with automatic checksum calculation (through ESPHome API / Home Assistant service call)
@@ -21,9 +21,22 @@ Most of the functionality of the original firmware has been re-implemented in ES
 Some of the functionality is a bit different due to the nature of ESPHome and Home Assistant implementation:
 
  - Disabling WiFi is not possible using the "A" button of the OLED display. The button turns off the screen and the LEDs.
- - The Email Web App is not accessible through ESPHome's web interface. The Web UI shows configured sensors, buttons, switches and a log window.
- - ESPHome itself cannot be commanded via Telnet, however, the [Stream server external component](https://github.com/oxan/esphome-stream-server) allows bidirectional forwarding of all the serial communication of the modem to a TCP client on your local network - but it excludes local usage of the modem.
+ - Setting the parameters of GPS Pinger is possible throuh Home Assistant user interface. There's a switch to turn it on or off, and there's an number input to adjust the send interval.
+ - The Email Web App is not accessible through ESPHome's web interface. The Web UI shows configured sensors, buttons, switches and a log window. Use a service call in Home Assistant to send the message:
+ 
+  ```
+  service: esphome.swarm_1_send_email
+  data:
+    from_email: your@email.address
+    to_email: another@email.address
+    subject: Hi from Swarm 1
+    message: This is a test message from Swarm 1
+  ```
+  The contents of `message` will be truncated so that the text fits into the maximum message size supported by Swarm.
 
+ 
+ - ESPHome itself cannot be commanded via Telnet, however, the [Stream server external component](https://github.com/oxan/esphome-stream-server) allows bidirectional forwarding of all the serial communication of the modem to a TCP client on your local network - but it excludes local usage of the modem.
+ 
 Additional functionality:
 
  - To receive data through the Swarm infrastructure, make sure you configure `message_notifications_switch`, `unsolicited_message_appid` and `unsolicited_message_data` options in the `swarm_m138` component.
