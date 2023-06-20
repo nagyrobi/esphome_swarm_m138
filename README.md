@@ -53,10 +53,11 @@ Additional functionality:
       data: WhateverData
     ```
     Note that you have to take care of the proper encoding format of `WhateverData` according to Swarm requirements.
- - To receive data through the Swarm infrastructure, make sure you configure `message_notifications_switch`, `unsolicited_message_appid` and `unsolicited_message_data` options in the `swarm_m138` component.
- - Turn on the switch
- - Send a message using POST to `/hive/api/v1/messages` according to the [API Docs](https://bumblebee.hive.swarm.space/apiDocs)
- - Wait for the message application ID and the data to arrive in Home Assistant and you can [do anything you'd like](https://www.home-assistant.io/docs/automation/trigger/#state-trigger) with it.
+ - To receive data through the Swarm infrastructure:
+    - make sure you configure `message_notifications_switch`, `unsolicited_message_appid` and `unsolicited_message_data` options in the `swarm_m138` component.
+    - Turn on the switch
+    - Send a message using POST to `/hive/api/v1/messages` according to the [API Docs](https://bumblebee.hive.swarm.space/apiDocs)
+    - Wait for the message application ID and the data to arrive in Home Assistant and you can [do anything you'd like](https://www.home-assistant.io/docs/automation/trigger/#state-trigger) with it.
 
 ## Installation
 
