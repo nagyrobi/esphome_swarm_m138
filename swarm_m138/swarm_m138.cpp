@@ -235,16 +235,18 @@ void SwarmModem::handle_char_(uint8_t c) {
         this->msgtext_->publish_state(this->hex_to_ascii(token));  // Publish text
 
 
-//    } else if (s.substr(0, 6) == "$MM N=") {  //eg. "$MM N=E*16\n"
-//      std::istringstream iss(s);
-//      std::string token;
-//      std::getline(iss, token, '=');  // Skip "$MM N="
-//      std::getline(iss, token, ',');  // Message notifications status, D=disabled, E=enabled
-//      if (token == "E") {
-//        this->parent_->SwarmModemMsgNotifSw->publish_state(true);
-//      } else if (token == "D") {
-//        this->parent_->SwarmModemMsgNotifSw->publish_state(false);
-//      }
+    } else if (s.substr(0, 6) == "$MM N=") {  //eg. "$MM N=E*16\n"
+      std::istringstream iss(s);
+      std::string token;
+      std::getline(iss, token, '=');  // Skip "$MM N="
+      std::getline(iss, token, ',');  // Message notifications status, D=disabled, E=enabled
+      if (token == "E") {
+        if (this->msg_noti_switch_ != nullptr)
+          this->msg_noti_switch_->publish_state(true);
+      } else if (token == "D") {
+        if (this->msg_noti_switch_ != nullptr)
+          this->msg_noti_switch_->publish_state(false);
+      }
 
     } else if (s.substr(0, 3) == "$MM") {  //eg. "$MM 3*13\n"
       std::istringstream iss(s);

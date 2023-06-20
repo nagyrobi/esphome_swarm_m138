@@ -41,6 +41,7 @@ class SwarmModem : public PollingComponent,  public uart::UARTDevice {
   void set_msgu(sensor::Sensor *sensor) { msgu_ = sensor; }
   void set_cpuv(sensor::Sensor *sensor) { cpuv_ = sensor; }
   void set_cput(sensor::Sensor *sensor) { cput_ = sensor; }
+  void set_msg_noti_switch(switch_::Switch *sw) { this->msg_noti_switch_ = sw; }
   
   void write_binary(bool value);
   void write_msgnotif_sw(bool value);
@@ -76,6 +77,7 @@ class SwarmModem : public PollingComponent,  public uart::UARTDevice {
   sensor::Sensor *msgu_{nullptr};
   sensor::Sensor *cpuv_{nullptr};
   sensor::Sensor *cput_{nullptr};
+  switch_::Switch *msg_noti_switch_{nullptr};
 
   void handle_char_(uint8_t c);
   std::vector<uint8_t> rx_message_;

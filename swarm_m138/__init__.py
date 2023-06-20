@@ -172,6 +172,7 @@ async def to_code(config):
     if CONF_MSG_NOTI in config:
         sw = await switch.new_switch(config[CONF_MSG_NOTI])
         cg.add(sw.set_parent(var))
+        cg.add(var.set_msg_noti_switch(sw))
 
     if CONF_DEL_UNSENT in config:
         btn = await button.new_button(config[CONF_DEL_UNSENT])
