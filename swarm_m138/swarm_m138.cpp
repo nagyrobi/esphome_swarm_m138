@@ -326,13 +326,7 @@ void SwarmModem::dump_config() {
   LOG_BUTTON("", "Button", this->restart_modem_button_);
 }
 
-void SwarmModem::write_binary(bool state) {
-  this->write_str(ONOFF(state));
-}
-
-
 void SwarmModemMsgNotifSw::dump_config() {
-  LOG_SWITCH("", "Message notifications", this);
 }
 
 void SwarmModemMsgNotifSw::write_state(bool state) {
@@ -350,7 +344,6 @@ void SwarmModem::write_msgnotif_sw(bool state) {
 
 
 void SwarmModemDelUnsentMsg::dump_config() {
-  LOG_BUTTON("", "Delete unsent Messages", this);
 }
 
 void SwarmModemDelUnsentMsg::press_action() {
@@ -365,7 +358,6 @@ void SwarmModem::delunsentmsg() {
 
 
 void SwarmModemDelReceivedMsg::dump_config() {
-  LOG_BUTTON("", "Delete all received Messages", this);
 }
 
 void SwarmModemDelReceivedMsg::press_action() {
@@ -379,7 +371,6 @@ void SwarmModem::delrcvdtmsg() {
 }
 
 void SwarmModemReadNewestMsg::dump_config() {
-  LOG_BUTTON("", "Read newsest Message", this);
 }
 
 void SwarmModemReadNewestMsg::press_action() {
@@ -393,7 +384,6 @@ void SwarmModem::readnewstmsg() {
 }
 
 void SwarmModemRestart::dump_config() {
-  LOG_BUTTON("", "Restart modem", this);
 }
 
 void SwarmModemRestart::press_action() {
