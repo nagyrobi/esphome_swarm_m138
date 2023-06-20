@@ -1,6 +1,6 @@
 # ESPHome configuration for Swarm Eval Kit
 
-[Swarm](https://swarm.space/) provides low-bandwidth satellite connectivity using ultra-small satellites in a low orbit. These satellites cover every point on Earth, enabling IoT devices to operate in any location. They orbit at 450-550 km altitude, spread out like strings of pearls into a series of distributed sun-synchronous orbital planes, allowing them to provide global network coverage. The IoT devices can transmit data messages of 192 bytes to the satellites, which relay them through public internet to your site, via various API methods.
+[Swarm](https://swarm.space/) provides low-bandwidth satellite connectivity for IoT devices using ultra-small satellites in a low orbit. They orbit at 450-550 km altitude, spread out like strings of pearls into a series of distributed sun-synchronous orbital planes, allowing them to provide global network coverage. The IoT devices can transmit data messages of 192 bytes to the satellites using a simple 22cm ¼-wave antenna operating in the VHF band. The Swarm cloud can push the data through public internet to any site, via various API methods.
 
 The [Swarm Eval Kit](https://swarm.space/product/swarm-eval-kit/) is a device based on ESP32-S2 (FeatherS2) microcontroller connected to the Swarm M138 Modem handling the communications with the satellite network. The kit contains various peripherals like display, addressable LEDs, energy sensors which are all supported by ESPHome.
 The kit comes with a [pre-installed, open sourced firmware](https://github.com/Swarm-Technologies/Getting-Started) and it was designed to [test the functionality](https://swarm.space/swarm-eval-kit-quickstart-guide/) of the service.
@@ -53,7 +53,7 @@ Additional functionality:
       appID: 9999
       data: WhateverData
     ```
-    Note that you have to take care of the proper encoding format of `WhateverData` according to Swarm requirements.
+    Note that you have to take care of the proper encoding format and size of `WhateverData` according to Swarm requirements.
  - To receive data through the Swarm infrastructure:
     - Make sure you configure `message_notifications_switch`, `unsolicited_message_appid` and `unsolicited_message_data` options in the `swarm_m138` component.
     - Turn on the switch
