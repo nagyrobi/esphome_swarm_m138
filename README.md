@@ -26,15 +26,16 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
 
 Additional functionality:
 
- - To receive data through the Swarm infrastrucure, make sure you configure `message_notifications_switch`, `unsolicited_message_appid` and `unsolicited_message_data` options in the `swarm_m138` component.
+ - To receive data through the Swarm infrastructure, make sure you configure `message_notifications_switch`, `unsolicited_message_appid` and `unsolicited_message_data` options in the `swarm_m138` component.
+ - Turn on the switch
  - Send a message using POST to `/hive/api/v1/messages` according to the [API Docs](https://bumblebee.hive.swarm.space/apiDocs)
- - Wait for the message to arrive in Home Assistant and do anything you'd like with it.
+ - Wait for the message application ID and the data to arrive in Home Assistant and you can [do anything you'd like](https://www.home-assistant.io/docs/automation/trigger/#state-trigger) with it.
 
 ## Installation
 
 Prepare your ESPHome firmware binary following the steps of the [documentation](https://esphome.io/). If you're using the Dashboard, click on the config entry's 3-dots menu, choose _Install_ > _Manual Download_ > _Modern Format_, wait for the compile to finish and save the binary on your computer.
 
-Open up your Eval Kit and remove the FeatherS2 module from the mainboard, also disconnect the screen wing from it. Connect it to your compute via an USB-C cable, while holding down the BOOT button, to enter in bootloader mode.
+Open up your Eval Kit and remove the FeatherS2 module from the mainboard, also disconnect the screen wing from it. Connect it to your computer via an USB-C cable, while holding down the BOOT button, to enter in bootloader mode.
 
 Make a backup of the original firmware from the FeatherS2 module:
 ```
