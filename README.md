@@ -22,23 +22,37 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
 
  - Disabling WiFi is not possible using the "A" button of the OLED display. The button turns off the screen and the LEDs.
  - Setting the parameters of GPS Pinger is possible throuh Home Assistant user interface. There's a switch to turn it on or off, and there's an number input to adjust the send interval.
- - The Email Web App is not accessible through ESPHome's web interface. The Web UI shows configured sensors, buttons, switches and a log window. Use a service call in Home Assistant to send the message:
+ - The Email Web App is not accessible through ESPHome's web interface. The Web UI shows configured sensors, buttons, switches and a log window. Use a [service call in Home Assistant](https://www.home-assistant.io/docs/scripts/service-calls/) to send the message:
  
-  ```
-  service: esphome.swarm_1_send_email
-  data:
-    from_email: your@email.address
-    to_email: another@email.address
-    subject: Hi from Swarm 1
-    message: This is a test message from Swarm 1
-  ```
-  The contents of `message` will be truncated so that the text fits into the maximum message size supported by Swarm.
-
+    ```
+    service: esphome.swarm_1_send_email
+    data:
+      from_email: your@email.address
+      to_email: another@email.address
+      subject: Hi from Swarm 1
+      message: This is a test message from Swarm 1
+    ```
+    The contents of `message` will be truncated so that the text fits into the maximum message size supported by Swarm.
  
  - ESPHome itself cannot be commanded via Telnet, however, the [Stream server external component](https://github.com/oxan/esphome-stream-server) allows bidirectional forwarding of all the serial communication of the modem to a TCP client on your local network - but it excludes local usage of the modem.
+ - Sending direct modem commands is easier also through a service call, because the checksum will be automatically calculated, so it's not needed to manually add it:
+    ```
+    service: esphome.swarm_1_modem_command
+    data:
+      nmea_sentence: $FV
+    ``` 
+    The result can be observed in the log window of ESPHome's web interface or the Dashboard if [UART logging](https://esphome.io/components/uart.html#debugging) remains enabled in the configuration.
  
 Additional functionality:
 
+ - To send some arbitrary data from Home Assistant to yourself through Swarm, with an Application ID of your choice, there's another service call available:
+    ```
+    service: esphome.swarm_1_send_data
+    data:
+      appID: 9999
+      data: WhateverData
+    ```
+    Note that you have to take care of the proper encoding format of `WhateverData` according to Swarm requirements.
  - To receive data through the Swarm infrastructure, make sure you configure `message_notifications_switch`, `unsolicited_message_appid` and `unsolicited_message_data` options in the `swarm_m138` component.
  - Turn on the switch
  - Send a message using POST to `/hive/api/v1/messages` according to the [API Docs](https://bumblebee.hive.swarm.space/apiDocs)
