@@ -1,9 +1,9 @@
 # ESPHome configuration for Swarm Eval Kit
 
-[Swarm](https://swarm.space/) provides low-bandwidth satellite connectivity using ultra-small satellites in a low orbit. These satellites cover every point on Earth, enabling IoT devices to operate in any location. They orbit at 450-550 km altitude, spread out like strings of pearls into a series of distributed sun-synchronous orbital planes. This arrangement allows the satellites to provide global network coverage. The IoT devices can transmit data messages of 192 bytes to the satellites, which relay them through public internet to your site, via various API methods.
+[Swarm](https://swarm.space/) provides low-bandwidth satellite connectivity using ultra-small satellites in a low orbit. These satellites cover every point on Earth, enabling IoT devices to operate in any location. They orbit at 450-550 km altitude, spread out like strings of pearls into a series of distributed sun-synchronous orbital planes, allowing them to provide global network coverage. The IoT devices can transmit data messages of 192 bytes to the satellites, which relay them through public internet to your site, via various API methods.
 
 The [Swarm Eval Kit](https://swarm.space/product/swarm-eval-kit/) is a device based on ESP32-S2 (FeatherS2) microcontroller connected to the Swarm M138 Modem handling the communications with the satellite network. The kit contains various peripherals like display, addressable LEDs, energy sensors which are all supported by ESPHome.
-The kit comes with a [pre-installed, open sourced firmware](https://github.com/Swarm-Technologies/Getting-Started) which allows [testing the functionality](https://swarm.space/swarm-eval-kit-quickstart-guide/) of the service.
+The kit comes with a [pre-installed, open sourced firmware](https://github.com/Swarm-Technologies/Getting-Started) and it was designed to [test the functionality](https://swarm.space/swarm-eval-kit-quickstart-guide/) of the service.
 
 The ESPHome configuration and custom component for the M138 Modem is an alternative to the original firmware, aimed to extend the functionality of it:
 
@@ -17,7 +17,7 @@ Most of the functionality of the original firmware has been re-implemented in ES
  - OLED Display and Buttons, local energy sensors
  - GPS Pinger functionality (compatible with Swarm's Bumblebee Hive)
  - Email Web App functionality (usable through ESPHome API / Home Assistant service call)
- - Direct Modem commands (with automatic checksum calculation (through ESPHome API / Home Assistant service call)
+ - Direct Modem commands (+automatic checksum calculation)
 
 Some of the functionality is a bit different due to the nature of ESPHome and Home Assistant implementation:
 

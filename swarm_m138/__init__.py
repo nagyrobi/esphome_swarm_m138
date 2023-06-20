@@ -17,6 +17,7 @@ from esphome.const import (
     ICON_WIFI,
     ICON_COUNTER,
     ICON_SIGNAL,
+    ICON_RESTART,
     UNIT_VOLT,
     UNIT_CELSIUS,
     UNIT_SECOND,
@@ -44,9 +45,12 @@ ICON_MAP_MARKER_UP = "mdi:map-marker-up"
 ICON_SPEEDO = "mdi:speedometer-medium"
 ICON_CHQ = "mdi:crosshairs-question"
 ICON_CLOUD_UPLOAD_OUTLINE = "mdi:cloud-upload-outline"
+ICON_CLOUD_DOWNLOAD_OUTLINE = "mdi:cloud-download-outline"
 ICON_MESSAGE_BADGE = "mdi:message-badge"
 ICON_MESSAGE_PROCS = "mdi:message-processing"
 ICON_MESSAGE_TEXT = "mdi:message-text"
+ICON_MESSAGE_FAST = "mdi:message-text-fast-outline"
+ICON_MESSAGE_OFF = "mdi:message-bulleted-off"
 
 CONF_GPS = "gps_fix"
 CONF_LAT = "latitude"
@@ -75,11 +79,31 @@ CONF_RESTART_MODEM = "restart_modem_button"
 
 CONFIG_SCHEMA = uart.UART_DEVICE_SCHEMA.extend({
     cv.GenerateID(): cv.declare_id(SwarmModem),
-    cv.Optional(CONF_MSG_NOTI): switch.SWITCH_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemMsgNotifSw)}),
-    cv.Optional(CONF_DEL_UNSENT): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemDelUnsentMsg)}),
-    cv.Optional(CONF_DEL_RECEIVED): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemDelReceivedMsg)}),
-    cv.Optional(CONF_READ_NEWEST): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemReadNewestMsg)}),
-    cv.Optional(CONF_RESTART_MODEM): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemRestart)}),
+#    cv.Optional(CONF_MSG_NOTI): switch.SWITCH_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemMsgNotifSw)}),
+    cv.Optional(CONF_MSG_NOTI): switch.switch_schema(
+        SwarmModemMsgNotifSw, 
+        icon=ICON_MESSAGE_FAST
+    ),
+#    cv.Optional(CONF_DEL_UNSENT): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemDelUnsentMsg)}),
+    cv.Optional(CONF_DEL_UNSENT): button.button_schema(
+        SwarmModemDelUnsentMsg, 
+        icon=ICON_MESSAGE_OFF
+    ),
+#    cv.Optional(CONF_DEL_RECEIVED): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemDelReceivedMsg)}),
+    cv.Optional(CONF_DEL_RECEIVED): button.button_schema(
+        SwarmModemDelReceivedMsg, 
+        icon=ICON_MESSAGE_OFF
+    ),
+#    cv.Optional(CONF_READ_NEWEST): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemReadNewestMsg)}),
+    cv.Optional(CONF_READ_NEWEST): button.button_schema(
+        SwarmModemReadNewestMsg, 
+        icon=ICON_MESSAGE_BADGE
+    ),
+#    cv.Optional(CONF_RESTART_MODEM): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemRestart)}),
+    cv.Optional(CONF_RESTART_MODEM): button.button_schema(
+        SwarmModemRestart, 
+        icon=ICON_RESTART
+    ),
 
     cv.Optional(CONF_LAT): text_sensor.text_sensor_schema(
         icon=ICON_MAP_MARKER
@@ -143,7 +167,7 @@ CONFIG_SCHEMA = uart.UART_DEVICE_SCHEMA.extend({
         state_class=STATE_CLASS_MEASUREMENT,
     ),
     cv.Optional(CONF_MSGU): sensor.sensor_schema(
-        icon=ICON_MESSAGE_BADGE,
+        icon=ICON_CLOUD_DOWNLOAD_OUTLINE,
         accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
     ),
