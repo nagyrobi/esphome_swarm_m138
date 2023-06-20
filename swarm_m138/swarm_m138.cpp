@@ -131,7 +131,6 @@ void SwarmModem::handle_char_(uint8_t c) {
       std::getline(iss, token, ',');  // Skip value 4 (FDEV=9)
       std::getline(iss, token, ',');  // Get value 5 (596f7527766520676f74206d61696c21)
       if (this->msutext_ != nullptr && !token.empty())
-//        this->msutext_->publish_state(token);  // Publish Unsolicited Message Data
         this->msutext_->publish_state(this->hex_to_ascii(token));  // Publish Unsolicited Message Data
 
     }
@@ -222,16 +221,7 @@ void SwarmModem::handle_char_(uint8_t c) {
         this->msgapid_->publish_state(token);  // Publish application ID
       std::getline(iss, token, ',');  // Get Text data
 
-      // Convert hexadecimal data to ASCII text
-//      std::string asciiText;
-//      for (std::size_t i = 0; i < token.length(); i += 2) {
-//        std::string byteString = token.substr(i, 2);
-//        char byte = static_cast<char>(std::stoi(byteString, nullptr, 16));
-//        asciiText.push_back(byte);
-//      }
-
       if (this->msgtext_ != nullptr)
-//        this->msgtext_->publish_state(asciiText);  // Publish text
         this->msgtext_->publish_state(this->hex_to_ascii(token));  // Publish text
 
 
