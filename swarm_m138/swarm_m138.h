@@ -42,6 +42,10 @@ class SwarmModem : public PollingComponent,  public uart::UARTDevice {
   void set_cpuv(sensor::Sensor *sensor) { cpuv_ = sensor; }
   void set_cput(sensor::Sensor *sensor) { cput_ = sensor; }
   void set_msg_noti_switch(switch_::Switch *sw) { this->msg_noti_switch_ = sw; }
+  void set_del_unsent_button(button::Button *btn) { this->del_unsent_button_ = btn; }
+  void set_del_received_button(button::Button *btn) { this->del_received_button_ = btn; }
+  void set_read_newest_button(button::Button *btn) { this->read_newest_button_ = btn; }
+  void set_restart_modem_button(button::Button *btn) { this->restart_modem_button_ = btn; }
   
   void write_binary(bool value);
   void write_msgnotif_sw(bool value);
@@ -78,6 +82,10 @@ class SwarmModem : public PollingComponent,  public uart::UARTDevice {
   sensor::Sensor *cpuv_{nullptr};
   sensor::Sensor *cput_{nullptr};
   switch_::Switch *msg_noti_switch_{nullptr};
+  button::Button *del_unsent_button_{nullptr};
+  button::Button *del_received_button_{nullptr};
+  button::Button *read_newest_button_{nullptr};
+  button::Button *restart_modem_button_{nullptr};
 
   void handle_char_(uint8_t c);
   std::vector<uint8_t> rx_message_;

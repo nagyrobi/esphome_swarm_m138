@@ -300,25 +300,30 @@ void SwarmModem::handle_char_(uint8_t c) {
 }
 
 void SwarmModem::dump_config() {
-  LOG_TEXT_SENSOR("", "", this->gps_);
-  LOG_TEXT_SENSOR("", "", this->lat_);
-  LOG_TEXT_SENSOR("", "", this->lon_);
-  LOG_TEXT_SENSOR("", "", this->alt_);
-  LOG_TEXT_SENSOR("", "", this->cou_);
-  LOG_TEXT_SENSOR("", "", this->spe_);
-  LOG_TEXT_SENSOR("", "", this->ver_);
-  LOG_TEXT_SENSOR("", "", this->spf_);
-  LOG_TEXT_SENSOR("", "", this->msgapid_);
-  LOG_TEXT_SENSOR("", "", this->msgtext_);
-  LOG_TEXT_SENSOR("", "", this->msuapid_);
-  LOG_TEXT_SENSOR("", "", this->msutext_);
-  LOG_SENSOR("", "", this->rssi_);
-  LOG_SENSOR("", "", this->tme_);
-  LOG_SENSOR("", "", this->msgt_);
-  LOG_SENSOR("", "", this->jam_);
-  LOG_SENSOR("", "", this->msgu_);
-  LOG_SENSOR("", "", this->cpuv_);
-  LOG_SENSOR("", "", this->cput_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->gps_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->lat_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->lon_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->alt_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->cou_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->spe_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->ver_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->spf_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->msgapid_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->msgtext_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->msuapid_);
+  LOG_TEXT_SENSOR("", "Text sensor", this->msutext_);
+  LOG_SENSOR("", "Sensor", this->rssi_);
+  LOG_SENSOR("", "Sensor", this->tme_);
+  LOG_SENSOR("", "Sensor", this->msgt_);
+  LOG_SENSOR("", "Sensor", this->jam_);
+  LOG_SENSOR("", "Sensor", this->msgu_);
+  LOG_SENSOR("", "Sensor", this->cpuv_);
+  LOG_SENSOR("", "Sensor", this->cput_);
+  LOG_SWITCH("", "Switch", this->msg_noti_switch_);
+  LOG_BUTTON("", "Button", this->del_unsent_button_);
+  LOG_BUTTON("", "Button", this->del_received_button_);
+  LOG_BUTTON("", "Button", this->read_newest_button_);
+  LOG_BUTTON("", "Button", this->restart_modem_button_);
 }
 
 void SwarmModem::write_binary(bool state) {
@@ -353,8 +358,8 @@ void SwarmModemDelUnsentMsg::press_action() {
 }
 
 void SwarmModem::delunsentmsg() {
-  this->write_str("$MT D=U*15\n");  //delete
   ESP_LOGI(TAG, "Deleting unsent messages");
+  this->write_str("$MT D=U*15\n");  //delete
   this->write_str("$MT C=U*12\n");  //count msgs (should be 0) to update sensor
 }
 

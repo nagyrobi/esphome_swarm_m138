@@ -177,18 +177,22 @@ async def to_code(config):
     if CONF_DEL_UNSENT in config:
         btn = await button.new_button(config[CONF_DEL_UNSENT])
         cg.add(btn.set_parent(var))
+        cg.add(var.set_del_unsent_button(btn))
 
     if CONF_DEL_RECEIVED in config:
         btn = await button.new_button(config[CONF_DEL_RECEIVED])
         cg.add(btn.set_parent(var))
+        cg.add(var.set_del_received_button(btn))
 
     if CONF_READ_NEWEST in config:
         btn = await button.new_button(config[CONF_READ_NEWEST])
         cg.add(btn.set_parent(var))
+        cg.add(var.set_read_newest_button(btn))
 
     if CONF_RESTART_MODEM in config:
         btn = await button.new_button(config[CONF_RESTART_MODEM])
         cg.add(btn.set_parent(var))
+        cg.add(var.set_restart_modem_button(btn))
 
     if CONF_GPS in config:
         sens = await text_sensor.new_text_sensor(config[CONF_GPS])
