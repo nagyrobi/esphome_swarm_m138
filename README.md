@@ -25,7 +25,7 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
  - Setting the parameters of GPS Pinger is possible throuh Home Assistant user interface. There's a switch to turn it on or off, and there's an number input to adjust the send interval.
  - The Email Web App is not accessible through ESPHome's web interface. The Web UI shows configured sensors, buttons, switches and a log window. Use a [service call in Home Assistant](https://www.home-assistant.io/docs/scripts/service-calls/) to send the message:
  
-    ```
+    ```yaml
     service: esphome.swarm_1_send_email
     data:
       from_email: your@email.address
@@ -37,7 +37,7 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
  
  - ESPHome itself cannot be commanded via Telnet, however, the [Stream server external component](https://github.com/oxan/esphome-stream-server) allows bidirectional forwarding of all the serial communication of the modem to a TCP client on your local network - but it excludes local usage of the modem.
  - Sending direct modem commands is easier also through a service call, because the checksum will be automatically calculated, so it's not needed to manually add it:
-    ```
+    ```yaml
     service: esphome.swarm_1_modem_command
     data:
       nmea_sentence: $FV
@@ -47,7 +47,7 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
 Additional functionality:
 
  - To send some arbitrary data from Home Assistant to yourself through Swarm, with an Application ID of your choice, there's another service call available:
-    ```
+    ```yaml
     service: esphome.swarm_1_send_data
     data:
       appID: 9999
