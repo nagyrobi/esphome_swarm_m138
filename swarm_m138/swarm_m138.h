@@ -34,7 +34,8 @@ class SwarmModem : public PollingComponent,  public uart::UARTDevice {
   void set_msgtext(text_sensor::TextSensor *text_sensor) { msgtext_ = text_sensor; }
   void set_msuapid(text_sensor::TextSensor *text_sensor) { msuapid_ = text_sensor; }
   void set_msutext(text_sensor::TextSensor *text_sensor) { msutext_ = text_sensor; }
-  void set_rssi(sensor::Sensor *sensor) { rssi_ = sensor; }
+  void set_rssi_bak(sensor::Sensor *sensor) { rssi_bak_ = sensor; }
+  void set_rssi_sat(sensor::Sensor *sensor) { rssi_sat_ = sensor; }
   void set_tme(sensor::Sensor *sensor) { tme_ = sensor; }
   void set_msgt(sensor::Sensor *sensor) { msgt_ = sensor; }
   void set_jam(sensor::Sensor *sensor) { jam_ = sensor; }
@@ -74,7 +75,8 @@ class SwarmModem : public PollingComponent,  public uart::UARTDevice {
   text_sensor::TextSensor *msgtext_{nullptr};
   text_sensor::TextSensor *msuapid_{nullptr};
   text_sensor::TextSensor *msutext_{nullptr};
-  sensor::Sensor *rssi_{nullptr};
+  sensor::Sensor *rssi_bak_{nullptr};
+  sensor::Sensor *rssi_sat_{nullptr};
   sensor::Sensor *tme_{nullptr};
   sensor::Sensor *msgt_{nullptr};
   sensor::Sensor *jam_{nullptr};

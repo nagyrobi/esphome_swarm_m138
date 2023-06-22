@@ -21,8 +21,7 @@ Most of the functionality of the original firmware has been re-implemented in ES
 
 Some of the functionality is a bit different due to the nature of ESPHome and Home Assistant implementation:
 
- - Disabling WiFi is not possible using the "A" button of the OLED display. The button turns off the screen and the LEDs.
- - Setting the parameters of GPS Pinger is possible throuh Home Assistant user interface. There's a switch to turn it on or off, and there's an number input to adjust the send interval.
+ - Disabling WiFi and the LEDs, changing the GPS pinger interval or turning it off will not reboot the board, they happen instantky. Setting these parameters is also possible throuh Home Assistant user interface. There are switches to turn them on or off, and there's an number input to adjust the GPS ping send interval. ESPHome periodically saves these settings automatically, if you reset the board before an autosave cycle, the settings will not be kept.
  - The Email Web App is not accessible through ESPHome's web interface. The Web UI shows configured sensors, buttons, switches and a log window. Use a [service call in Home Assistant](https://www.home-assistant.io/docs/scripts/service-calls/) to send the message:
  
     ```yaml
@@ -34,7 +33,10 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
       message: This is a test message from Swarm 1
     ```
     The contents of `message` will be truncated so that the text fits into the maximum message size supported by Swarm.
+    
+    Note: For a graphical user interface to call services, in Home Assistant go to _Developer Tools_ > _Services_.
  
+ - In AP mode, the Web UI only allows providing WiFi credentials to connect to an existing network.
  - ESPHome itself cannot be commanded via Telnet, however, the [Stream server external component](https://github.com/oxan/esphome-stream-server) allows bidirectional forwarding of all the serial communication of the modem to a TCP client on your local network - but it excludes local usage of the modem.
  - Sending direct modem commands is easier also through a service call, because the checksum will be automatically calculated, so it's not needed to manually add it:
     ```yaml
@@ -45,6 +47,9 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
     The result can be observed in the log window of ESPHome's web interface or the Dashboard if [UART logging](https://esphome.io/components/uart.html#debugging) remains enabled in the configuration.
  
 Additional functionality:
+
+ - With ESPHome connected to Home Assistant (either via its native API or MQTT), various states of the kit can be displayed, monitored and logged in a convenient way.
+ - There's also a switch to trun off the screen in order to prevent OLED burn-in (display contents are cleared). It can also be toggled by double-clikcing the button A on the board.
 
  - To send some arbitrary data from Home Assistant to yourself through Swarm, with an Application ID of your choice, there's another service call available:
     ```yaml
@@ -71,7 +76,7 @@ Using [esptool](https://github.com/espressif/esptool), make a backup of the orig
 ./esptool --port /dev/ttyUSB0 read_flash 0 ALL swarm_original_firmware_backup.bin
 ```
 
-Make sure the process ends successufully. In case not, use an external USB-TTL adapter connected to the RX/TX pins of the module.
+Make sure the process ends successufully. In case not, use an external USB-TTL adapter connected to the RX/TX pins of the module (might take longer).
 
 To flash your ESPHome binary, power-cycle the module with BOOT button held down, and erase the flash memory:
 ```

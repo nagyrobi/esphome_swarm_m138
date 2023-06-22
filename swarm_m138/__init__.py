@@ -39,6 +39,8 @@ SwarmModemRestart = swarm_m138_ns.class_("SwarmModemRestart", button.Button, cg.
 
 ICON_WIFI_ALERT = "mdi:wifi-alert"
 ICON_WIFI_STAR = "mdi:wifi-star"
+ICON_WIFI_ARRDOWN = "mdi:wifi-arrow-down"
+ICON_WOFO_ARRLEFT = "mdi:wifi-arrow-left"
 ICON_CHIP_CARD = "mdi:credit-card-chip-outline"
 ICON_MAP_MARKER = "mdi:map-marker"
 ICON_MAP_MARKER_UP = "mdi:map-marker-up"
@@ -58,7 +60,8 @@ CONF_LON = "longitude"
 CONF_ALT = "altitude"
 CONF_COU = "course"
 CONF_SPE = "speed"
-CONF_RSSI = "rssi"
+CONF_RSSI_BAK = "rssi_bkgnd"
+CONF_RSSI_SAT = "rssi_sat"
 CONF_TMEP = "time_epoch"
 CONF_VER = "modem_fw_ver"
 CONF_MSGT = "unsent_messages"
@@ -79,27 +82,22 @@ CONF_RESTART_MODEM = "restart_modem_button"
 
 CONFIG_SCHEMA = uart.UART_DEVICE_SCHEMA.extend({
     cv.GenerateID(): cv.declare_id(SwarmModem),
-#    cv.Optional(CONF_MSG_NOTI): switch.SWITCH_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemMsgNotifSw)}),
     cv.Optional(CONF_MSG_NOTI): switch.switch_schema(
         SwarmModemMsgNotifSw, 
         icon=ICON_MESSAGE_FAST
     ),
-#    cv.Optional(CONF_DEL_UNSENT): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemDelUnsentMsg)}),
     cv.Optional(CONF_DEL_UNSENT): button.button_schema(
         SwarmModemDelUnsentMsg, 
         icon=ICON_MESSAGE_OFF
     ),
-#    cv.Optional(CONF_DEL_RECEIVED): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemDelReceivedMsg)}),
     cv.Optional(CONF_DEL_RECEIVED): button.button_schema(
         SwarmModemDelReceivedMsg, 
         icon=ICON_MESSAGE_OFF
     ),
-#    cv.Optional(CONF_READ_NEWEST): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemReadNewestMsg)}),
     cv.Optional(CONF_READ_NEWEST): button.button_schema(
         SwarmModemReadNewestMsg, 
         icon=ICON_MESSAGE_BADGE
     ),
-#    cv.Optional(CONF_RESTART_MODEM): button.BUTTON_SCHEMA.extend({cv.GenerateID(): cv.declare_id(SwarmModemRestart)}),
     cv.Optional(CONF_RESTART_MODEM): button.button_schema(
         SwarmModemRestart, 
         icon=ICON_RESTART
@@ -143,9 +141,16 @@ CONFIG_SCHEMA = uart.UART_DEVICE_SCHEMA.extend({
         icon=ICON_MESSAGE_TEXT
     ),
 
-    cv.Optional(CONF_RSSI): sensor.sensor_schema(
+    cv.Optional(CONF_RSSI_BAK): sensor.sensor_schema(
         unit_of_measurement=UNIT_DECIBEL_MILLIWATT,
-        icon=ICON_WIFI_STAR,
+        icon=ICON_WOFO_ARRLEFT,
+        accuracy_decimals=0,
+        state_class=STATE_CLASS_MEASUREMENT,
+        device_class=DEVICE_CLASS_SIGNAL_STRENGTH
+    ),
+    cv.Optional(CONF_RSSI_SAT): sensor.sensor_schema(
+        unit_of_measurement=UNIT_DECIBEL_MILLIWATT,
+        icon=ICON_WIFI_ARRDOWN,
         accuracy_decimals=0,
         state_class=STATE_CLASS_MEASUREMENT,
         device_class=DEVICE_CLASS_SIGNAL_STRENGTH
@@ -266,9 +271,13 @@ async def to_code(config):
         sens = await text_sensor.new_text_sensor(config[CONF_MSG_UN_TEXT])
         cg.add(var.set_msutext(sens))
 
-    if CONF_RSSI in config:
-        sens = await sensor.new_sensor(config[CONF_RSSI])
-        cg.add(var.set_rssi(sens))
+    if CONF_RSSI_BAK in config:
+        sens = await sensor.new_sensor(config[CONF_RSSI_BAK])
+        cg.add(var.set_rssi_bak(sens))
+
+    if CONF_RSSI_SAT in config:
+        sens = await sensor.new_sensor(config[CONF_RSSI_SAT])
+        cg.add(var.set_rssi_sat(sens))
 
     if CONF_TMEP in config:
         sens = await sensor.new_sensor(config[CONF_TMEP])

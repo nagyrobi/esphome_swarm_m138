@@ -195,11 +195,19 @@ void SwarmModem::handle_char_(uint8_t c) {
     if (s.substr(0, 8) == "$RT RSSI") {  //eg. "$RT RSSI=-104*18\n"
       std::istringstream iss(s);
       std::string token;
+      std::string tokrssi;
+      std::string tokrsnr;
       std::getline(iss, token, '=');  // Skip "$RT RSSI="
-      std::getline(iss, token, ',');  // Get RSSI value
-      token.erase(std::remove(token.begin(), token.end(), ' '), token.end());  // Remove spaces if any
-      if (this->rssi_ != nullptr && !token.empty())
-        this->rssi_->publish_state(parse_number<float>(token).value_or(0));  // Publish rssi
+      std::getline(iss, tokrssi, ',');  // Get RSSI value
+      std::getline(iss, tokrsnr, '=');  // to see if this is a background, or a satellite RSSI
+      tokrssi.erase(std::remove(tokrssi.begin(), tokrssi.end(), ' '), tokrssi.end());  // Remove spaces if any
+      if (tokrsnr == "SNR") {
+        if (this->rssi_sat_ != nullptr && !tokrssi.empty() && tokrssi != "0")
+          this->rssi_sat_->publish_state(parse_number<float>(tokrssi).value_or(0));  // Publish rssi_sat
+      } else {
+        if (this->rssi_bak_ != nullptr && !tokrssi.empty() && tokrssi != "0")
+          this->rssi_bak_->publish_state(parse_number<float>(tokrssi).value_or(0));  // Publish rssi_bkgnd
+      }
     }
 
     if (s.substr(0, 3) == "$MT") {  //eg. "$MT 0*09\n"
@@ -220,22 +228,20 @@ void SwarmModem::handle_char_(uint8_t c) {
       if (this->msgapid_ != nullptr && !token.empty())
         this->msgapid_->publish_state(token);  // Publish application ID
       std::getline(iss, token, ',');  // Get Text data
-
       if (this->msgtext_ != nullptr)
         this->msgtext_->publish_state(this->hex_to_ascii(token));  // Publish text
-
 
     } else if (s.substr(0, 6) == "$MM N=") {  //eg. "$MM N=E*16\n"
       std::istringstream iss(s);
       std::string token;
       std::getline(iss, token, '=');  // Skip "$MM N="
       std::getline(iss, token, ',');  // Message notifications status, D=disabled, E=enabled
-      if (token == "E") {
-        if (this->msg_noti_switch_ != nullptr)
-          this->msg_noti_switch_->publish_state(true);
-      } else if (token == "D") {
-        if (this->msg_noti_switch_ != nullptr)
-          this->msg_noti_switch_->publish_state(false);
+      if (this->msg_noti_switch_ != nullptr && !token.empty()) { // Publish notification switch state
+        if (token == "E") {
+          this->msg_noti_switch_->publish_state(true);  
+        } else if (token == "D") {
+          this->msg_noti_switch_->publish_state(false);  
+        } 
       }
 
     } else if (s.substr(0, 3) == "$MM") {  //eg. "$MM 3*13\n"
@@ -312,7 +318,8 @@ void SwarmModem::dump_config() {
   LOG_TEXT_SENSOR("", "Text sensor", this->msgtext_);
   LOG_TEXT_SENSOR("", "Text sensor", this->msuapid_);
   LOG_TEXT_SENSOR("", "Text sensor", this->msutext_);
-  LOG_SENSOR("", "Sensor", this->rssi_);
+  LOG_SENSOR("", "Sensor", this->rssi_bak_);
+  LOG_SENSOR("", "Sensor", this->rssi_sat_);
   LOG_SENSOR("", "Sensor", this->tme_);
   LOG_SENSOR("", "Sensor", this->msgt_);
   LOG_SENSOR("", "Sensor", this->jam_);
