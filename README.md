@@ -2,8 +2,8 @@
 
 [Swarm](https://swarm.space/) provides low-bandwidth satellite connectivity for IoT devices using ultra-small satellites in a low orbit at 450-550 km altitude. They are spread out like strings of pearls into a series of distributed sun-synchronous orbital planes, allowing them to provide global network coverage. The IoT devices can transmit data messages of 192 bytes to the satellites using a simple 22cm ¼-wave antenna operating in the VHF band. The data is relayed to the Swarm cloud which can push the data through public internet to any site, via various API methods.
 
-The [Swarm Eval Kit](https://swarm.space/product/swarm-eval-kit/) is a device based on ESP32-S2 (FeatherS2) microcontroller connected to the Swarm M138 Modem handling the communications with the satellite network. The kit contains various peripherals like display, addressable LEDs, energy sensors which are all supported by ESPHome.
-The kit comes with a [pre-installed, open sourced firmware](https://github.com/Swarm-Technologies/Getting-Started) and it was designed to [test the functionality](https://swarm.space/swarm-eval-kit-quickstart-guide/) of the service.
+The [Swarm Eval Kit](https://swarm.space/product/swarm-eval-kit/) is a device based on ESP32-S2 (FeatherS2) microcontroller connected to the Swarm M138 Modem handling the communications with the satellite network. The device contains various peripherals like display, addressable LEDs, energy sensors which are all supported by ESPHome.
+It comes with a [pre-installed, open sourced firmware](https://github.com/Swarm-Technologies/Getting-Started) and it was designed to [test the functionality](https://swarm.space/swarm-eval-kit-quickstart-guide/) of the service.
 
 The ESPHome configuration and custom component for the M138 Modem is an alternative to the original firmware, aimed to extend the functionality of it:
 
@@ -21,7 +21,7 @@ Most of the functionality of the original firmware has been re-implemented in ES
 
 Some of the functionality is a bit different due to the nature of ESPHome and Home Assistant implementation:
 
- - Disabling WiFi and the LEDs, changing the GPS pinger interval or turning it off will not reboot the board, they happen instantky. Setting these parameters is also possible throuh Home Assistant user interface. There are switches to turn them on or off, and there's an number input to adjust the GPS ping send interval. ESPHome periodically saves these settings automatically, if you reset the board before an autosave cycle, the settings will not be kept.
+ - Disabling WiFi and the LEDs, changing the GPS pinger interval or turning it off will not reboot the board, they happen instantly. Setting these parameters is also possible throuh Home Assistant user interface. There are switches to turn them on or off, and there's an number input to adjust the GPS ping send interval. ESPHome periodically saves these settings to the flash, if you reset the board before an autosave cycle, the settings will not be kept.
  - The Email Web App is not accessible through ESPHome's web interface. The Web UI shows configured sensors, buttons, switches and a log window. Use a [service call in Home Assistant](https://www.home-assistant.io/docs/scripts/service-calls/) to send the message:
  
     ```yaml
@@ -36,9 +36,9 @@ Some of the functionality is a bit different due to the nature of ESPHome and Ho
     
     Note: For a graphical user interface to call services, in Home Assistant go to _Developer Tools_ > _Services_.
  
- - In AP mode, the Web UI only allows providing WiFi credentials to connect to an existing network.
+ - In AP mode, the ESPHome Web UI only allows providing WiFi credentials to connect to an existing network.
  - ESPHome itself cannot be commanded via Telnet, however, the [Stream server external component](https://github.com/oxan/esphome-stream-server) allows bidirectional forwarding of all the serial communication of the modem to a TCP client on your local network - but it excludes local usage of the modem.
- - Sending direct modem commands is easier also through a service call, because the checksum will be automatically calculated, so it's not needed to manually add it:
+ - Sending direct modem commands is easier through a service call from Home Assistant, because the checksum will be automatically calculated, so it's not needed to manually add it:
     ```yaml
     service: esphome.swarm_1_modem_command
     data:
@@ -50,7 +50,6 @@ Additional functionality:
 
  - With ESPHome connected to Home Assistant (either via its native API or MQTT), various states of the kit can be displayed, monitored and logged in a convenient way.
  - There's also a switch to trun off the screen in order to prevent OLED burn-in (display contents are cleared). It can also be toggled by double-clikcing the button A on the board.
-
  - To send some arbitrary data from Home Assistant to yourself through Swarm, with an Application ID of your choice, there's another service call available:
     ```yaml
     service: esphome.swarm_1_send_data
