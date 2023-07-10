@@ -1,4 +1,4 @@
-# ESPHome configuration for Swarm Eval Kit
+# Swarm Eval Kit custom component for ESPHome
 
 [Swarm](https://swarm.space/) provides low-bandwidth satellite connectivity for IoT devices using ultra-small satellites in a low orbit at 450-550 km altitude. They are spread out like strings of pearls into a series of distributed sun-synchronous orbital planes, allowing them to provide global network coverage. The IoT devices can transmit data messages of 192 bytes to the satellites using a simple 22cm ¼-wave antenna operating in the VHF band. The data is relayed to the Swarm cloud which can push the data through public internet to any site, via various API methods.
 
