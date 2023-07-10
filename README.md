@@ -66,7 +66,7 @@ Additional functionality:
 
 ## Installation
 
-Prepare your ESPHome firmware binary following the steps of the [documentation](https://esphome.io/). For a start, use the [configuration file](https://github.com/nagyrobi/esphome_swarm_m138/blob/main/swarm_eval_kit.yaml) containing the functionality described above. Make sure to customize it to your environment (use your own passwords, Wi-Fi SSIDs etc). 
+Prepare your ESPHome firmware binary following the steps of the [documentation](https://esphome.io/). For a start, use the [configuration file](https://github.com/nagyrobi/esphome_swarm_m138/blob/main/swarm_eval_kit.yaml) containing the functionality described above. Make sure to also download the `custom` folder along with the yaml configuration. You can customize it to your environment (use your own names, passwords, Wi-Fi SSIDs etc). 
 
 If you're using the web based Dashboard, click on the config entry's 3-dots menu, choose _Install_ > _Manual Download_ > _Modern Format_, wait for the compile to finish and save the binary on your computer.
 
