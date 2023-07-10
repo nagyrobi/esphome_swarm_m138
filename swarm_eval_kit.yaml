@@ -1,0 +1,724 @@
+substitutions:
+  device_name: swarm-1
+  friendly_name: "Swarm 1"
+  device_description: "Swarm Eval Kit 1"
+
+esphome:
+  name: ${device_name}
+  comment: "${device_description}"
+  platformio_options:
+    board_build.extra_flags:
+      - "-DARDUINO_USB_CDC_ON_BOOT=0"  # Override, defaults to '-DARDUINO_USB_CDC_ON_BOOT=1', for compatibility with um_feathers2
+  on_boot:
+    priority: -200
+    then:
+      - delay: 6s
+      - globals.set:
+          id: waitboot
+          value: 'true'
+      - if:
+          condition:
+            switch.is_on: sw_screen
+          then:
+            - display.page.show: infos
+          else:
+            - display.page.show: screenoff
+      - component.update: feather_disp
+      - script.execute: script_gpsping
+
+esp32:
+  board: um_feathers2
+
+external_components:
+  - source: github://pr#4991
+    components: [ display ]
+  - source: github://bekriebel/esphome@sh1107_fix
+    components:
+      - ssd1306_base
+      - ssd1306_i2c
+    refresh: 900min
+  - source:
+      type: local
+      path: custom/components
+    components: 
+      - swarm_m138
+    refresh: 1min
+#  - source: github://oxan/esphome-stream-server
+#    refresh: 900min
+
+#stream_server:
+#   uart_id: swarm_uart
+#   port: 6638
+
+logger:
+  baud_rate: 0
+#  level: INFO
+#  level: VERBOSE
+  logs:
+    light: INFO
+    sensor: INFO
+    text_sensor: INFO
+
+api:
+  reboot_timeout: 0s #15min
+  encryption:
+    key: !secret encryption_key
+  services:
+    - service: modem_command
+      variables:
+        nmea_sentence: string
+      then:
+        - uart.write: 
+            id: swarm_uart
+            data: !lambda |-
+              swarm_m138::SwarmModem swarm;
+              std::string str = swarm.appennd_checksum_newline(nmea_sentence);
+              ESP_LOGI("swarm_m138_lambda", "Modem command forwarded from Home Assistant: %s", str.c_str());
+              std::vector<uint8_t> vec(str.begin(), str.end());
+              return vec;
+    - service: send_email
+      variables:
+        from_email: string
+        to_email: string
+        subject: string
+        message: string
+      then:
+        - uart.write:
+            id: swarm_uart
+            data: !lambda |-
+              std::string truncated_message = message;
+              size_t fixed_parts_length = 35; // Length of fixed parts: {"i":1,"t":"","f":"","s":"","m":""}
+              size_t remainingLength = 192 - fixed_parts_length - to_email.length() - from_email.length() - subject.length();  //192 works, should be 148???
+              if (truncated_message.length() > remainingLength) {
+                  truncated_message = truncated_message.substr(0, remainingLength);
+              }
+              std::string my_email =
+                  "{\"i\":1,\"t\":\"" + to_email +
+                  "\",\"f\":\"" + from_email +
+                  "\",\"s\":\"" + subject +
+                  "\",\"m\":\"" + truncated_message +
+                  "\"}";
+              std::string td_tosend =
+                  //"$TD AI=65000,\"" + toHexlify(my_email) + "\"";
+                  "$TD AI=65000,\"" + my_email + "\"";
+              swarm_m138::SwarmModem swarm;
+              std::string str = swarm.appennd_checksum_newline(td_tosend);
+              ESP_LOGI("swarm_m138_lambda", "E-mail message from Home Assistant: %s", str.c_str());
+              std::vector<uint8_t> vec(str.begin(), str.end());
+              return vec;
+    - service: send_data
+      variables:
+        appID: string
+        data: string
+      then:
+        - uart.write:
+            id: swarm_uart
+            data: !lambda |-
+              std::string td_tosend =
+                  "$TD AI=" + appID + ",\"" + data + "\"";
+              swarm_m138::SwarmModem swarm;
+              std::string str = swarm.appennd_checksum_newline(td_tosend);
+              ESP_LOGI("swarm_m138_lambda", "Application data from Home Assistant: %s", str.c_str());
+              std::vector<uint8_t> vec(str.begin(), str.end());
+              return vec;
+
+
+ota:
+  password: !secret ota_password
+
+wifi:
+#  ssid: !secret wifi_ssid
+#  password: !secret wifi_password
+  reboot_timeout: 5min #change this if you use it offline a lot
+  id: swifi
+  ap:
+    password: "12345678"
+
+captive_portal:
+
+web_server:
+  ota: true
+  port: 80
+  version: 2
+  local: true
+
+globals:
+  - id: waitboot
+    type: bool
+    restore_value: no
+  - id: num_gpspings_sent
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: displaycycle
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  frequency: 400kHz
+
+uart:
+  id: swarm_uart
+  rx_pin: GPIO44
+  tx_pin: GPIO43
+  data_bits: 8
+  baud_rate: 115200
+  debug:
+    direction: BOTH
+    after:
+      delimiter: "\n"
+    sequence:
+      - lambda: UARTDebug::log_string(direction, bytes);
+
+font:
+  - file: "custom/EnterCommand.ttf"
+    id: glyphs
+    size: 16
+
+image:
+  - file: "custom/swarm_w.png"
+    id: img_swarm
+    type: BINARY
+  - file: "custom/esphome-logo-text.png"
+    id: img_esphome
+    type: BINARY
+
+display:
+  - platform: ssd1306_i2c
+    model: 'SH1107_128x64'
+    id: feather_disp
+    rotation: 90
+    flip_x: false
+    flip_y: false
+    offset_y: 96
+    offset_x: 0
+    external_vcc: true
+    update_interval: 5.0s
+    pages:
+      - id: logos
+        lambda: |-
+          it.image(0, 2, id(img_swarm));
+          it.image(0, 46, id(img_esphome));
+          it.print(23, 28, id(glyphs), "EVAL KIT running:");
+
+      - id: infos
+        lambda: |-
+          if (!id(swifi).is_disabled()) {
+            if (id(swifi).is_connected()) {
+              it.printf(0, 0, id(glyphs), "IP: %s (%.0f)", id(swarm_wifi_ip).state.c_str(), id(swarm_rssi_wifi).state); 
+            } else {
+              it.printf(0, 0, id(glyphs), "%s connecting...", App.get_name().c_str());
+            }
+          } else {
+            it.print(0, 0, id(glyphs), "WiFi: Disabled");
+          }
+          if (id(displaycycle) == 0) {
+            it.printf(0, 16, id(glyphs), "BAT: %.4f V, %.4f A", id(swarm_bv).state, id(swarm_bi).state);
+          } else if (id(displaycycle) == 1) {
+            it.printf(0, 16, id(glyphs), "SOL: %.4f V, %.4f A", id(swarm_sv).state, id(swarm_si).state);
+          } else if (id(displaycycle) == 2) {
+            it.printf(0, 16, id(glyphs), "3v3: %.4f V, %.4f A", id(swarm_tv).state, id(swarm_ti).state);
+            id(displaycycle) = -1;
+          }
+          id(displaycycle) += 1;
+          std::string rssi_text;
+          if (id(swarm_rssi_bkgnd).state > -90) {
+            rssi_text = "Bad";
+          } else if (id(swarm_rssi_bkgnd).state > -93) {
+            rssi_text = "Marginal";
+          } else if (id(swarm_rssi_bkgnd).state > -97) {
+            rssi_text = "OK";
+          } else if (id(swarm_rssi_bkgnd).state > -100) {
+            rssi_text = "Good";
+          } else {
+            rssi_text = "Great";
+          }
+          it.printf(0, 32, id(glyphs), "RSSI: %.0f dBm (%s)", id(swarm_rssi_bkgnd).state, rssi_text.c_str());
+          if (id(sw_gpsping).state) {
+            it.printf(0, 48, id(glyphs), "GPS Ping: %.0f minutes", id(gps_ping_interval).state);
+          } else {
+            it.print(0, 48, id(glyphs), "GPS Ping: Disabled");
+          }
+
+      - id: screenoff
+        lambda: //this is empty so the screen stays clear
+
+button:
+  - platform: restart
+    name: Feather Reboot
+    entity_category: diagnostic
+  - platform: factory_reset
+    name: Feather Factory Default
+    entity_category: diagnostic
+
+number:
+  - platform: template
+    name: "GPS Pinger interval"
+    entity_category: config
+    id: gps_ping_interval
+    optimistic: true
+    min_value: 5
+    max_value: 720
+    restore_value: true
+    initial_value: 60
+    step: 1
+    unit_of_measurement: min
+    icon: mdi:wifi-sync
+
+switch:
+  - platform: template
+    id: sw_wifi_leds
+    restore_state: true
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - wifi.enable:
+      - light.turn_on: led_rssi_bkgnd
+      - light.turn_on: led_rssi_wifi
+    on_turn_off:
+      - wifi.disable:
+      - light.turn_off: led_rssi_bkgnd
+      - light.turn_off: led_rssi_wifi
+
+  - platform: template
+    name: "Display"
+    entity_category: config
+    id: sw_screen
+    restore_state: true
+    optimistic: true
+    icon: mdi:artboard
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      then:
+        - if:
+            condition:
+              lambda: return id(waitboot);
+            then:
+              - display.page.show: infos
+              - component.update: feather_disp
+    on_turn_off:
+      then:
+        - if:
+            condition:
+              lambda: return id(waitboot);
+            then:
+              - display.page.show: screenoff
+              - component.update: feather_disp
+  - platform: template
+    name: "GPS Pinger"
+    id: sw_gpsping
+    entity_category: config
+    restore_state: true
+    optimistic: true
+    icon: mdi:wifi-marker
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      then:
+        - script.execute: script_gpsping
+    on_turn_off:
+      then:
+        - script.stop: script_gpsping
+
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: GPIO1
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Feather Button A"
+    entity_category: ""
+    icon: mdi:square-circle
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at least 0.2s
+      then:
+        - logger.log: "Double Clicked"
+        - switch.toggle: sw_screen
+        - delay: 100ms
+        - component.update: feather_disp
+    - timing:
+        - ON for at most 1s
+        - OFF for at least 0.5s
+      then:
+        - logger.log: "Single Short Clicked"
+        - switch.toggle: sw_wifi_leds
+        - delay: 100ms
+        - component.update: feather_disp
+
+  - platform: gpio
+    pin: 
+      number: GPIO33
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Feather Button C"
+    entity_category: ""
+    icon: mdi:square-circle
+    filters:
+      - delayed_on: 70ms
+    on_press:
+      then:
+        - switch.toggle: sw_gpsping
+        - component.update: feather_disp
+
+  - platform: gpio
+    pin: 
+      number: GPIO3
+      inverted: true
+    name: "GPS 1pps"
+    icon: mdi:timer-outline
+  - platform: gpio
+    pin: 
+      number: GPIO7
+      inverted: true
+    name: "GPIO 1"
+    icon: mdi:circle-medium
+
+light:
+  - platform: neopixelbus
+    id: neopixels
+    type: GRBW
+    variant: 800KBPS
+    pin: GPIO38
+    internal: true
+    num_leds: 2
+  - platform: partition
+    id: led_rssi_bkgnd
+    name: "LED RSSI Background"
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_OFF
+    default_transition_length: 200ms
+    icon: mdi:circle-slice-8
+    segments:
+      - id: neopixels
+        from: 0
+        to: 0
+    on_turn_on:
+      then:
+        - lambda: id(swarm_rssi_bkgnd).publish_state(id(swarm_rssi_bkgnd).state);
+  - platform: partition
+    id: led_rssi_wifi
+    name: "LED RSSI WiFi"
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_OFF
+    default_transition_length: 200ms
+    icon: mdi:circle-slice-8
+    segments:
+      - id: neopixels
+        from: 1
+        to: 1
+    on_turn_on:
+      then:
+        - lambda: id(swarm_rssi_wifi).publish_state(id(swarm_rssi_wifi).state);
+
+swarm_m138:
+  - uart_id: swarm_uart
+    latitude:
+      name: "Latitude"
+      id: swarm_lat
+    longitude:
+      name: "Longitude"
+      id: swarm_lon
+    altitude:
+      name: "Altitude"
+      id: swarm_alt
+    course:
+      name: "Course"
+      id: swarm_cou
+    speed:
+      name: "Speed"
+      id: swarm_spe
+    time_epoch:
+      name: "Epoch Time"
+      id: epochtime
+    gps_fix:
+      name: "GPS Fix Quality"
+      id: gps_fix
+    gps_spoof_state:
+      name: "Spoof state"
+    gps_jamming_level:
+      name: "Jamming level"
+    modem_cpu_voltage:
+      name: "CPU Voltage"
+      icon: mdi:plus-minus
+      id: swarm_tv
+    modem_cpu_temperature:
+      name: "CPU Temperature"
+    modem_fw_ver:
+      name: "Modem firmware"
+    delete_unsent_button:
+      name: "Delete unsent messages"
+    delete_all_received_button:
+      name: "Delete received messages"
+    read_newest_message_button:
+      name: "Read newest message"
+    message_notifications_switch:
+      name: "Message notifications"
+    unsent_messages:
+      name: "Unsent messages"
+    received_unread_messages:
+      name: "Unread messages"
+    received_message_appid:
+      name: "Message AppID"
+    received_message_data:
+      name: "Message Text"
+    unsolicited_message_appid:
+      name: "Unsolicited AppID"
+    unsolicited_message_data:
+      name: "Unsolicited Text"
+    restart_modem_button:
+      name: "Modem Restart"
+    rssi_sat:
+      name: "Satellite RSSI"
+    rssi_bkgnd:
+      name: "Background RSSI"
+      id: swarm_rssi_bkgnd
+      on_value:
+        - if:
+            condition:
+              light.is_on: led_rssi_bkgnd
+            then:
+              - if:
+                  condition:
+                    lambda: 'return x > -91;'
+                  then:
+                    - light.turn_on:
+                        id: led_rssi_bkgnd
+                        transition_length: 100ms
+                        red: 100%
+                        green: 0%
+                        blue: 0%
+                        white: 0%
+              - if:
+                  condition:
+                    lambda: 'return x < -95;'
+                  then:
+                    - light.turn_on:
+                        id: led_rssi_bkgnd
+                        transition_length: 100ms
+                        red: 0%
+                        green: 100%
+                        blue: 0%
+                        white: 0%
+              - if:
+                  condition:
+                    lambda: 'return (x <= -91 and x >= -95);'
+                  then:
+                    - light.turn_on:
+                        id: led_rssi_bkgnd
+                        transition_length: 100ms
+                        red: 100%
+                        green: 100%
+                        blue: 0%
+                        white: 0%
+
+text_sensor:
+  - platform: template
+    name: "GPS Ping Message"
+    id: swarm_out_gpsping
+    internal: true
+  - platform: wifi_info
+    mac_address:
+      name: WiFi MAC Address
+      id: swarm_wifi_mac
+      icon: mdi:wifi-strength-outline
+    ssid:
+      name: WiFi Connected SSID
+      id: swarm_wifi_ssid
+      icon: mdi:wifi-strength-outline
+    ip_address:
+      name: WiFi IP Address
+      id: swarm_wifi_ip
+      icon: mdi:wifi-strength-outline
+
+sensor:
+  - platform: uptime
+    name: Feather Uptime
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    id: swarm_rssi_wifi
+    update_interval: 30s
+    entity_category: diagnostic
+    icon: mdi:wifi-strength-outline
+    on_value:
+      - if:
+          condition:
+            light.is_on: led_rssi_wifi
+          then:
+            - if:
+                condition:
+                  lambda: 'return x > -45;'
+                then:
+                  - light.turn_on:
+                      id: led_rssi_wifi
+                      transition_length: 100ms
+                      red: 100%
+                      green: 0%
+                      blue: 0%
+                      white: 0%
+            - if:
+                condition:
+                  lambda: 'return x < -67;'
+                then:
+                  - light.turn_on:
+                      id: led_rssi_wifi
+                      transition_length: 100ms
+                      red: 0%
+                      green: 100%
+                      blue: 0%
+                      white: 0%
+            - if:
+                condition:
+                  lambda: 'return (x <= -45 and x >= -67);'
+                then:
+                  - light.turn_on:
+                      id: led_rssi_wifi
+                      transition_length: 100ms
+                      red: 100%
+                      green: 100%
+                      blue: 0%
+                      white: 0%
+
+  - platform: ina3221
+    address: 0x40
+    channel_1:
+      shunt_resistance: 0.01 ohm
+      current:
+        name: "Battery Current"
+        id: swarm_bi
+        icon: mdi:current-dc
+        entity_category: diagnostic
+      power:
+        name: "Battery Power"
+        entity_category: diagnostic
+      bus_voltage:
+        name: "Battery Voltage"
+        id: swarm_bv
+        icon: mdi:plus-minus
+        entity_category: diagnostic
+      shunt_voltage:
+        name: "Battery Shunt Voltage"
+        entity_category: diagnostic
+        icon: mdi:plus-minus
+        disabled_by_default: true
+    channel_2:
+      shunt_resistance: 0.01 ohm
+      current:
+        name: "Solar Current"
+        id: swarm_si
+        icon: mdi:current-dc
+        entity_category: diagnostic
+      power:
+        name: "Solar Power"
+        entity_category: diagnostic
+      bus_voltage:
+        name: "Solar Voltage"
+        id: swarm_sv
+        icon: mdi:plus-minus
+        entity_category: diagnostic
+      shunt_voltage:
+        name: "Solar Shunt Voltage"
+        entity_category: diagnostic
+        icon: mdi:plus-minus
+        disabled_by_default: true
+    channel_3:
+      shunt_resistance: 0.01 ohm
+      current:
+        name: "Modem Current"
+        id: swarm_ti
+        icon: mdi:current-dc
+        entity_category: diagnostic
+      power:
+        name: "Modem Power"
+        entity_category: diagnostic
+      bus_voltage:
+        name: "Modem Voltage"
+        icon: mdi:plus-minus
+        entity_category: diagnostic
+      shunt_voltage:
+        name: "Modem Shunt Voltage"
+        entity_category: diagnostic
+        icon: mdi:plus-minus
+        disabled_by_default: true
+
+script:
+  - id: script_gpsping
+    then:
+      - while:
+          condition:
+            and: 
+              - switch.is_on: sw_gpsping
+              - lambda: return id(waitboot);
+          then:
+          - if:
+              condition:
+                - lambda: |-
+                      return (!std::isnan(id(swarm_rssi_bkgnd).state) && 
+                        !std::isnan(id(epochtime).state) &&
+                        id(swarm_lon).has_state() &&
+                        id(swarm_lat).has_state() &&
+                        id(swarm_alt).has_state() &&
+                        id(swarm_spe).has_state() &&
+                        id(swarm_cou).has_state() 
+                      );
+              then:
+                  - lambda: ESP_LOGI("swarm_m138_lambda", "Sending GPS Ping");
+                  - uart.write:
+                        id: swarm_uart
+                        data: !lambda |-
+                                std::string rssi = std::to_string(id(swarm_rssi_bkgnd).state);
+                                std::string epoch = std::to_string(id(epochtime).state);
+                                std::string si = std::to_string(id(swarm_si).state);
+                                std::string bi = std::to_string(id(swarm_bi).state);
+                                std::string sv = std::to_string(id(swarm_sv).state);
+                                std::string bv = std::to_string(id(swarm_bv).state);
+                                std::string ti = std::to_string(id(swarm_ti).state);
+                                std::string nu = std::to_string(id(num_gpspings_sent));
+                                std::string gpsping =
+                                    "{\"ln\":" + std::string(id(swarm_lon).state.c_str()) +
+                                    ",\"si\":" + si.substr(0, si.length() - 5) +
+                                    ",\"bi\":" + bi.substr(0, bi.length() - 4) +
+                                    ",\"sv\":" + sv.substr(0, sv.length() - 3) +
+                                    ",\"lt\":" + std::string(id(swarm_lat).state.c_str()) +
+                                    ",\"bv\":" + bv.substr(0, bv.length() - 4) +
+                                    ",\"d\":" + epoch.substr(0, epoch.length() - 7) +
+                                    ",\"n\":" + nu + 
+                                    ",\"a\":" + std::string(id(swarm_alt).state.c_str()) +
+                                    ",\"s\":" + std::string(id(swarm_spe).state.c_str()) +
+                                    ",\"c\":" + std::string(id(swarm_cou).state.c_str()) +
+                                    ",\"r\":" + rssi.substr(0, rssi.length() - 7) +
+                                    ",\"ti\":" + ti.substr(0, ti.length() - 3) +
+                                    "}";
+                                id(swarm_out_gpsping).publish_state(gpsping);
+                                std::string command = 
+                                  "$TD AI=65535,\"" + gpsping + "\"";
+                                swarm_m138::SwarmModem swarm;
+                                std::string str = swarm.appennd_checksum_newline(command);
+                                ESP_LOGI("swarm_m138_lambda", "GPS Ping message: %s", str.c_str());
+                                id(num_gpspings_sent) += 1;
+                                std::vector<uint8_t> vec(str.begin(), str.end());
+                                return vec;
+
+                  - uart.write:
+                        id: swarm_uart
+                        data: !lambda |-
+                          std::string command = 
+                            "$MT C=U";
+                          swarm_m138::SwarmModem swarm;
+                          std::string str = swarm.appennd_checksum_newline(command);
+                          std::vector<uint8_t> vec(str.begin(), str.end());
+                          return vec;
+              else:
+                - lambda: ESP_LOGI("swarm_m138_lambda", "Omitting GPS Ping due to invalid position data");
+          - delay: !lambda 'return (id(gps_ping_interval).state * 60000);'
+
+
