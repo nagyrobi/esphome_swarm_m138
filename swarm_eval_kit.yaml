@@ -30,19 +30,18 @@ esp32:
   board: um_feathers2
 
 external_components:
+  - source: github://nagyrobi/esphome_swarm_m138
+    components: 
+      - swarm_m138
+    refresh: 60min
   - source: github://pr#4991
-    components: [ display ]
+    components: 
+      - display
   - source: github://bekriebel/esphome@sh1107_fix
     components:
       - ssd1306_base
       - ssd1306_i2c
     refresh: 900min
-  - source:
-      type: local
-      path: custom/components
-    components: 
-      - swarm_m138
-    refresh: 1min
 #  - source: github://oxan/esphome-stream-server
 #    refresh: 900min
 
