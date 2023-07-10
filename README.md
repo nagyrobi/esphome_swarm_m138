@@ -66,7 +66,9 @@ Additional functionality:
 
 ## Installation
 
-Prepare your ESPHome firmware binary following the steps of the [documentation](https://esphome.io/). If you're using the Dashboard, click on the config entry's 3-dots menu, choose _Install_ > _Manual Download_ > _Modern Format_, wait for the compile to finish and save the binary on your computer.
+Prepare your ESPHome firmware binary following the steps of the [documentation](https://esphome.io/). For a start, use the [configuration file](https://github.com/nagyrobi/esphome_swarm_m138/blob/main/swarm_eval_kit.yaml) containing the functionality described above. Make sure to customize it to your environment (use your own passwords, Wi-Fi SSIDs etc). 
+
+If you're using the web based Dashboard, click on the config entry's 3-dots menu, choose _Install_ > _Manual Download_ > _Modern Format_, wait for the compile to finish and save the binary on your computer.
 
 Open up your Eval Kit and remove the FeatherS2 module from the mainboard, also disconnect the screen wing from it. Connect it to your computer via an USB-C cable, while holding down the BOOT button, to enter in bootloader mode.
 
