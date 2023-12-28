@@ -23,8 +23,6 @@ external_components:
       - ssd1306_i2c
     refresh: 900min
 
-
-
 logger:
   baud_rate: 0
 
