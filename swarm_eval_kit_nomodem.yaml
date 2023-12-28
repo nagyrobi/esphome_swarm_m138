@@ -1,0 +1,378 @@
+substitutions:
+  device_name: swarm-1
+  friendly_name: "Swarm 1"
+  device_description: "Swarm Eval Kit 1"
+
+esphome:
+  name: ${device_name}
+  comment: "${device_description}"
+  platformio_options:
+    board_build.extra_flags:
+      - "-DARDUINO_USB_CDC_ON_BOOT=0"  # Override, defaults to '-DARDUINO_USB_CDC_ON_BOOT=1', for compatibility with um_feathers2
+
+esp32:
+  board: um_feathers2
+
+external_components:
+  - source: github://pr#4991
+    components: 
+      - display
+  - source: github://bekriebel/esphome@sh1107_fix
+    components:
+      - ssd1306_base
+      - ssd1306_i2c
+    refresh: 900min
+
+
+
+logger:
+  baud_rate: 0
+
+api:
+  reboot_timeout: 0s
+  encryption:
+    key: !secret encryption_key
+ota:
+  password: !secret ota_password
+
+wifi:
+  reboot_timeout: 5min #change this if you use it offline a lot
+  id: swifi
+  ap:
+    password: "12345678"
+
+captive_portal:
+
+web_server:
+  ota: true
+  port: 80
+  version: 2
+  local: true
+
+globals:
+  - id: waitboot
+    type: bool
+    restore_value: no
+  - id: num_gpspings_sent
+    type: int
+    restore_value: no
+    initial_value: '0'
+  - id: displaycycle
+    type: int
+    restore_value: no
+    initial_value: '0'
+
+i2c:
+  sda: GPIO8
+  scl: GPIO9
+  frequency: 400kHz
+
+font:
+  - file: "custom/EnterCommand.ttf"
+    id: glyphs
+    size: 16
+
+image:
+  - file: "custom/swarm_w.png"
+    id: img_swarm
+    type: BINARY
+  - file: "custom/esphome-logo-text.png"
+    id: img_esphome
+    type: BINARY
+
+display:
+  - platform: ssd1306_i2c
+    model: 'SH1107_128x64'
+    id: feather_disp
+    rotation: 90
+    flip_x: false
+    flip_y: false
+    offset_y: 96
+    offset_x: 0
+    external_vcc: true
+    update_interval: 5.0s
+    pages:
+      - id: logos
+        lambda: |-
+          it.image(0, 2, id(img_swarm));
+          it.image(0, 46, id(img_esphome));
+          it.print(23, 28, id(glyphs), "EVAL KIT running:");
+
+      - id: infos
+        lambda: |-
+          if (!id(swifi).is_disabled()) {
+            if (id(swifi).is_connected()) {
+              it.printf(0, 0, id(glyphs), "IP: %s (%.0f)", id(swarm_wifi_ip).state.c_str(), id(swarm_rssi_wifi).state); 
+            } else {
+              it.printf(0, 0, id(glyphs), "%s connecting...", App.get_name().c_str());
+            }
+          } else {
+            it.print(0, 0, id(glyphs), "WiFi: Disabled");
+          }
+
+      - id: screenoff
+        lambda: //this is empty so the screen stays clear
+
+button:
+  - platform: restart
+    name: Feather Reboot
+    entity_category: diagnostic
+  - platform: factory_reset
+    name: Feather Factory Default
+    entity_category: diagnostic
+
+switch:
+  - platform: template
+    id: sw_wifi_leds
+    restore_state: true
+    optimistic: true
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      - wifi.enable:
+      - light.turn_on: led_rssi_bkgnd
+      - light.turn_on: led_rssi_wifi
+    on_turn_off:
+      - wifi.disable:
+      - light.turn_off: led_rssi_bkgnd
+      - light.turn_off: led_rssi_wifi
+
+  - platform: template
+    name: "Display"
+    entity_category: config
+    id: sw_screen
+    restore_state: true
+    optimistic: true
+    icon: mdi:artboard
+    restore_mode: RESTORE_DEFAULT_ON
+    on_turn_on:
+      then:
+        - if:
+            condition:
+              lambda: return id(waitboot);
+            then:
+              - display.page.show: infos
+              - component.update: feather_disp
+    on_turn_off:
+      then:
+        - if:
+            condition:
+              lambda: return id(waitboot);
+            then:
+              - display.page.show: screenoff
+              - component.update: feather_disp
+binary_sensor:
+  - platform: gpio
+    pin: 
+      number: GPIO1
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Feather Button A"
+    entity_category: ""
+    icon: mdi:square-circle
+    on_multi_click:
+    - timing:
+        - ON for at most 1s
+        - OFF for at most 1s
+        - ON for at most 1s
+        - OFF for at least 0.2s
+      then:
+        - logger.log: "Double Clicked"
+        - switch.toggle: sw_screen
+        - delay: 100ms
+        - component.update: feather_disp
+    - timing:
+        - ON for at most 1s
+        - OFF for at least 0.5s
+      then:
+        - logger.log: "Single Short Clicked"
+        - switch.toggle: sw_wifi_leds
+        - delay: 100ms
+        - component.update: feather_disp
+
+  - platform: gpio
+    pin: 
+      number: GPIO33
+      inverted: true
+      mode:
+        input: true
+        pullup: true
+    name: "Feather Button C"
+    entity_category: ""
+    icon: mdi:square-circle
+    filters:
+      - delayed_on: 70ms
+    on_press:
+      then:
+        - component.update: feather_disp
+
+  - platform: gpio
+    pin: 
+      number: GPIO3
+      inverted: true
+    name: "GPS 1pps"
+    icon: mdi:timer-outline
+  - platform: gpio
+    pin: 
+      number: GPIO7
+      inverted: true
+    name: "GPIO 1"
+    icon: mdi:circle-medium
+
+light:
+  - platform: neopixelbus
+    id: neopixels
+    type: GRBW
+    variant: 800KBPS
+    pin: GPIO38
+    internal: true
+    num_leds: 2
+  - platform: partition
+    id: led_rssi_bkgnd
+    name: "LED RSSI Background"
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_OFF
+    default_transition_length: 200ms
+    icon: mdi:circle-slice-8
+    segments:
+      - id: neopixels
+        from: 0
+        to: 0
+  - platform: partition
+    id: led_rssi_wifi
+    name: "LED RSSI WiFi"
+    entity_category: config
+    restore_mode: RESTORE_DEFAULT_OFF
+    default_transition_length: 200ms
+    icon: mdi:circle-slice-8
+    segments:
+      - id: neopixels
+        from: 1
+        to: 1
+
+text_sensor:
+  - platform: wifi_info
+    mac_address:
+      name: WiFi MAC Address
+      id: swarm_wifi_mac
+      icon: mdi:wifi-strength-outline
+    ssid:
+      name: WiFi Connected SSID
+      id: swarm_wifi_ssid
+      icon: mdi:wifi-strength-outline
+    ip_address:
+      name: WiFi IP Address
+      id: swarm_wifi_ip
+      icon: mdi:wifi-strength-outline
+
+sensor:
+  - platform: uptime
+    name: Feather Uptime
+  - platform: wifi_signal
+    name: "WiFi RSSI"
+    id: swarm_rssi_wifi
+    update_interval: 30s
+    entity_category: diagnostic
+    icon: mdi:wifi-strength-outline
+    on_value:
+      - if:
+          condition:
+            light.is_on: led_rssi_wifi
+          then:
+            - if:
+                condition:
+                  lambda: 'return x > -45;'
+                then:
+                  - light.turn_on:
+                      id: led_rssi_wifi
+                      transition_length: 100ms
+                      red: 100%
+                      green: 0%
+                      blue: 0%
+                      white: 0%
+            - if:
+                condition:
+                  lambda: 'return x < -67;'
+                then:
+                  - light.turn_on:
+                      id: led_rssi_wifi
+                      transition_length: 100ms
+                      red: 0%
+                      green: 100%
+                      blue: 0%
+                      white: 0%
+            - if:
+                condition:
+                  lambda: 'return (x <= -45 and x >= -67);'
+                then:
+                  - light.turn_on:
+                      id: led_rssi_wifi
+                      transition_length: 100ms
+                      red: 100%
+                      green: 100%
+                      blue: 0%
+                      white: 0%
+
+  - platform: ina3221
+    address: 0x40
+    channel_1:
+      shunt_resistance: 0.01 ohm
+      current:
+        name: "Battery Current"
+        id: swarm_bi
+        icon: mdi:current-dc
+        entity_category: diagnostic
+      power:
+        name: "Battery Power"
+        entity_category: diagnostic
+      bus_voltage:
+        name: "Battery Voltage"
+        id: swarm_bv
+        icon: mdi:plus-minus
+        entity_category: diagnostic
+      shunt_voltage:
+        name: "Battery Shunt Voltage"
+        entity_category: diagnostic
+        icon: mdi:plus-minus
+        disabled_by_default: true
+    channel_2:
+      shunt_resistance: 0.01 ohm
+      current:
+        name: "Solar Current"
+        id: swarm_si
+        icon: mdi:current-dc
+        entity_category: diagnostic
+      power:
+        name: "Solar Power"
+        entity_category: diagnostic
+      bus_voltage:
+        name: "Solar Voltage"
+        id: swarm_sv
+        icon: mdi:plus-minus
+        entity_category: diagnostic
+      shunt_voltage:
+        name: "Solar Shunt Voltage"
+        entity_category: diagnostic
+        icon: mdi:plus-minus
+        disabled_by_default: true
+    channel_3:
+      shunt_resistance: 0.01 ohm
+      current:
+        name: "Modem Current"
+        id: swarm_ti
+        icon: mdi:current-dc
+        entity_category: diagnostic
+      power:
+        name: "Modem Power"
+        entity_category: diagnostic
+      bus_voltage:
+        name: "Modem Voltage"
+        icon: mdi:plus-minus
+        entity_category: diagnostic
+      shunt_voltage:
+        name: "Modem Shunt Voltage"
+        entity_category: diagnostic
+        icon: mdi:plus-minus
+        disabled_by_default: true
+
