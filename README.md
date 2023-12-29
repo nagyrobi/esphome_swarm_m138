@@ -11,6 +11,8 @@ The ESPHome configuration and custom component for the M138 Modem is an alternat
  - Integration with a local automation system (eg. Home Assistant) to broaden the possibility of gathering data to be transmitted, or to trigger local actuators based on commands coming from remote locations
  - Various automations can be implemented, at ESPHome (firmware) or Home Assistant (system) level - they can rely on each other.
 
+Developed and tested with ESPHome version 2023.06.
+
 Most of the functionality of the original firmware has been re-implemented in ESPHome:
 
  - Background noise and WiFi RSSI indicator LEDs
